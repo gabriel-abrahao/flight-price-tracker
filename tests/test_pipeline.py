@@ -163,3 +163,12 @@ def test_google_tolerant_parser_reads_top_list_when_other_is_empty():
     google_direct.parse_flights(flights, res, True, "EUR")
     assert res.itineraries[0]["out_layover_min"] == [105]
     assert res.segments[0]["flight_number"] == "TP 73" and res.itineraries[0]["carbon_g"] == 812000
+
+
+def test_price_history_timestamps_are_seconds():
+    res = Result()
+    serpapi.parse_response(fixture("serpapi_rt.json"), res)
+    from fptracker.config import Search
+    s = expand_searches(load_config(), dt.date(2026, 11, 9))[0]
+    rows = runner.collect("serpapi", s, res, "20261110T000000Z", {}, "", 0.0)["price_history"]
+    assert rows[0]["history_date"] == "2025-11-08"

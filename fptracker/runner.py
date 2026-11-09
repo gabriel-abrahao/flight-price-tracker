@@ -109,7 +109,8 @@ def collect(provider_name: str, s: Search, res: Result, run_id: str, key: dict[s
     for seg in res.segments:
         tables["segments"].append({**key, **_clean(seg), "itinerary_uid": uid[seg["_itin"]]})
     for ph in res.price_history:
-        ts = dt.datetime.fromtimestamp(int(ph["history_ts_ms"]) / 1000, tz=dt.timezone.utc)
+        v = float(ph["history_ts_ms"])
+        ts = dt.datetime.fromtimestamp(v / 1000 if v > 1e11 else v, tz=dt.timezone.utc)  # SerpApi sends seconds
         tables["price_history"].append({**key, "history_ts_utc": ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
                                         "history_date": ts.date().isoformat(),
                                         "history_price": ph["history_price"], "currency": ph.get("currency")})
