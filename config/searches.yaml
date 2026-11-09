@@ -1,0 +1,89 @@
+# What to search, how often, and with which providers.
+#
+# A "search" = provider x route x trip instance x mode. Everything is expanded from the
+# `groups` below, so adding a route, trip or whole new group is a config-only change.
+# Run `python -m fptracker plan` to see the concrete searches and API-call budget for a day.
+
+timezone: Europe/Berlin          # query timestamps are also stored in this zone (weekday, hour)
+
+defaults:
+  currency: EUR
+  market: DE                     # point of sale / country (gl for Google, market for Ignav/Travelpayouts)
+  language: en
+  adults: 1
+  cabin: economy
+  min_days_ahead: 1              # stop searching a trip once its outbound date is this close
+
+# ---------------------------------------------------------------------------------------------
+# Providers. Each runs on its own cadence and API budget.
+#  every_n_days   : run on days where (date - epoch) % n == 0. An odd n (1, 3, 5) walks through
+#                   all weekdays, so day-of-week effects stay measurable.
+#  monthly_budget : max API calls per calendar month (null = unlimited). The budget is spread evenly
+#                   over the remaining scheduled runs of the month; when a run's share is smaller
+#                   than the number of searches, the lowest-priority searches (highest number) are
+#                   skipped for that provider.
+#  total_budget   : lifetime cap (for one-off free credit packs).
+#  secret_env     : environment variable holding the key; provider is skipped if it is missing.
+# ---------------------------------------------------------------------------------------------
+providers:
+  google_direct:                 # Google Flights scraped directly (fast-flights). Free, no key, may break.
+    enabled: true
+    every_n_days: 1
+    monthly_budget: null
+    pause_seconds: 4
+  serpapi:                       # Google Flights via SerpApi. Richest data. Free plan: 250 searches/month.
+    enabled: true
+    secret_env: SERPAPI_API_KEY
+    every_n_days: 2              # 2 is coprime with 7 -> every weekday is sampled every 2 weeks (~15 runs x 12 = ~180/month)
+    epoch: 2026-11-10
+    monthly_budget: 235
+    deep_search: true
+  ignav:                         # Live fares API. 1,000 free requests once, then $2 per 1,000.
+    enabled: true
+    secret_env: IGNAV_API_KEY
+    every_n_days: 1
+    monthly_budget: 450
+    total_budget: 950            # stays inside the free credits; raise it if you add billing
+  travelpayouts:                 # Aviasales Data API. Free, but prices are cached user searches (patchy).
+    enabled: true
+    secret_env: TRAVELPAYOUTS_TOKEN
+    every_n_days: 1
+    monthly_budget: null
+
+# Lower number = more important. A search's priority = mode priority + route priority + trip priority.
+mode_priority:
+  round_trip: 0
+  one_way_outbound: 1
+  one_way_return: 1
+
+groups:
+  - id: brazil_carnival
+    description: Berlin to Rio and Belo Horizonte around Carnival, 1-month trips
+    routes:
+      - {id: BER-GIG, origin: BER, destination: GIG, priority: 0}
+      - {id: BER-CNF, origin: BER, destination: CNF, priority: 1}
+    modes: [round_trip, one_way_outbound, one_way_return]
+    trips:
+      # Wednesday about a month before, returning the Thursday after Ash Wednesday.
+      - id: wed_to_thu_after_carnival
+        year: next
+        priority: 0
+        return:   {anchor: ash_wednesday, offset_days: 1}
+        outbound: {from: return, offset_months: -1, weekday: WED, snap: nearest}
+      # Wednesday before Carnival, returning one month later on a Wednesday.
+      - id: wed_before_carnival_plus_1m
+        year: next
+        priority: 0
+        outbound: {anchor: carnival_tuesday, offset_days: -6}
+        return:   {from: outbound, offset_months: 1, weekday: WED, snap: nearest}
+    # Optional per-group overrides of `defaults`, and provider subset:
+    # providers: [serpapi, google_direct]
+    # params: {max_stops: 1}
+
+  # Example of a fixed-date group (disabled):
+  # - id: christmas_test
+  #   enabled: false
+  #   routes: [{id: BER-GRU, origin: BER, destination: GRU}]
+  #   modes: [round_trip]
+  #   trips:
+  #     - {id: xmas, outbound: {date: 2026-12-18}, return: {date: 2027-01-08}}

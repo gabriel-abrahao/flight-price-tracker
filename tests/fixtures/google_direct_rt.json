@@ -1,0 +1,94 @@
+{
+ "flights": [
+  {
+   "type": "TP",
+   "price": 805,
+   "airlines": [
+    "TAP Air Portugal"
+   ],
+   "flights": [
+    {
+     "from_airport": {
+      "name": "Berlin Brandenburg Airport",
+      "code": "BER"
+     },
+     "to_airport": {
+      "name": "Humberto Delgado Airport",
+      "code": "LIS"
+     },
+     "departure": {
+      "date": [
+       2027,
+       2,
+       3
+      ],
+      "time": [
+       6,
+       0
+      ]
+     },
+     "arrival": {
+      "date": [
+       2027,
+       2,
+       3
+      ],
+      "time": [
+       8,
+       45
+      ]
+     },
+     "duration": 225,
+     "plane_type": "Airbus A320neo"
+    },
+    {
+     "from_airport": {
+      "name": "Humberto Delgado Airport",
+      "code": "LIS"
+     },
+     "to_airport": {
+      "name": "Rio de Janeiro/Gale\u00e3o International Airport",
+      "code": "GIG"
+     },
+     "departure": {
+      "date": [
+       2027,
+       2,
+       3
+      ],
+      "time": [
+       10,
+       30
+      ]
+     },
+     "arrival": {
+      "date": [
+       2027,
+       2,
+       3
+      ],
+      "time": [
+       17,
+       30
+      ]
+     },
+     "duration": 600,
+     "plane_type": "Airbus A330-900neo"
+    }
+   ],
+   "carbon": {
+    "typical_on_route": 790000,
+    "emission": 812000
+   }
+  }
+ ],
+ "metadata": {
+  "airlines": [
+   {
+    "code": "TP",
+    "name": "TAP Air Portugal"
+   }
+  ],
+  "alliances": []
+ }
+}

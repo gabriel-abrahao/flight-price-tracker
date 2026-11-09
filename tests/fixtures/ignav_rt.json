@@ -1,0 +1,95 @@
+{
+ "origin": "BER",
+ "destination": "GIG",
+ "departure_date": "2027-02-03",
+ "return_date": "2027-03-03",
+ "observed_at": "2026-11-10T05:00:00Z",
+ "itineraries": [
+  {
+   "price": {
+    "amount": 799.4,
+    "currency": "EUR",
+    "status": "verified"
+   },
+   "outbound": {
+    "carrier": "TP",
+    "duration_minutes": 930,
+    "segments": [
+     {
+      "marketing_carrier_code": "TP",
+      "flight_number": "541",
+      "operating_carrier_name": "TAP Air Portugal",
+      "departure_airport": "BER",
+      "departure_time_local": "2027-02-03T06:00:00",
+      "departure_timezone": "Europe/Berlin",
+      "departure_time_utc": "2027-02-03T05:00:00Z",
+      "arrival_airport": "LIS",
+      "arrival_time_local": "2027-02-03T08:45:00",
+      "arrival_timezone": "Europe/Lisbon",
+      "arrival_time_utc": "2027-02-03T08:45:00Z",
+      "duration_minutes": 225,
+      "aircraft": "A20N"
+     },
+     {
+      "marketing_carrier_code": "TP",
+      "flight_number": "73",
+      "operating_carrier_name": "TAP Air Portugal",
+      "departure_airport": "LIS",
+      "departure_time_local": "2027-02-03T10:30:00",
+      "departure_timezone": "Europe/Lisbon",
+      "departure_time_utc": "2027-02-03T10:30:00Z",
+      "arrival_airport": "GIG",
+      "arrival_time_local": "2027-02-03T17:30:00",
+      "arrival_timezone": "America/Sao_Paulo",
+      "arrival_time_utc": "2027-02-03T20:30:00Z",
+      "duration_minutes": 600,
+      "aircraft": "A339"
+     }
+    ]
+   },
+   "inbound": {
+    "carrier": "TP",
+    "duration_minutes": 800,
+    "segments": [
+     {
+      "marketing_carrier_code": "TP",
+      "flight_number": "74",
+      "operating_carrier_name": "TAP Air Portugal",
+      "departure_airport": "GIG",
+      "departure_time_local": "2027-03-03T19:00:00",
+      "departure_timezone": "America/Sao_Paulo",
+      "departure_time_utc": "2027-03-03T22:00:00Z",
+      "arrival_airport": "LIS",
+      "arrival_time_local": "2027-03-04T08:10:00",
+      "arrival_timezone": "Europe/Lisbon",
+      "arrival_time_utc": "2027-03-04T08:10:00Z",
+      "duration_minutes": 610,
+      "aircraft": "A339"
+     },
+     {
+      "marketing_carrier_code": "TP",
+      "flight_number": "546",
+      "operating_carrier_name": "TAP Air Portugal",
+      "departure_airport": "LIS",
+      "departure_time_local": "2027-03-04T09:30:00",
+      "departure_timezone": "Europe/Lisbon",
+      "departure_time_utc": "2027-03-04T09:30:00Z",
+      "arrival_airport": "BER",
+      "arrival_time_local": "2027-03-04T13:40:00",
+      "arrival_timezone": "Europe/Berlin",
+      "arrival_time_utc": "2027-03-04T12:40:00Z",
+      "duration_minutes": 190,
+      "aircraft": "A20N"
+     }
+    ]
+   },
+   "cabin_class": "economy",
+   "bags": {
+    "carry_on": 1,
+    "checked": 0
+   },
+   "has_mixed_carriers": false,
+   "ignav_id": "5e4f"
+  }
+ ]
+}

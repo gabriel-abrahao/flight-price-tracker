@@ -1,0 +1,23 @@
+{
+ "success": true,
+ "currency": "eur",
+ "data": [
+  {
+   "origin": "BER",
+   "destination": "RIO",
+   "origin_airport": "BER",
+   "destination_airport": "GIG",
+   "price": 760,
+   "airline": "TP",
+   "flight_number": "541",
+   "departure_at": "2027-02-03T06:00:00+01:00",
+   "return_at": "2027-03-03T19:00:00-03:00",
+   "transfers": 1,
+   "return_transfers": 1,
+   "duration": 1730,
+   "duration_to": 930,
+   "duration_back": 800,
+   "link": "/search/BER0302GIG03031?t=TP"
+  }
+ ]
+}

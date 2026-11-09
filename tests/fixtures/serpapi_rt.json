@@ -1,0 +1,208 @@
+{
+ "search_metadata": {
+  "id": "abc123",
+  "status": "Success",
+  "json_endpoint": "https://serpapi.com/searches/abc.json?api_key=SECRET"
+ },
+ "search_parameters": {
+  "engine": "google_flights",
+  "departure_id": "BER",
+  "arrival_id": "GIG",
+  "outbound_date": "2027-02-03",
+  "return_date": "2027-03-03",
+  "type": "1",
+  "currency": "EUR"
+ },
+ "best_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "Berlin Brandenburg",
+      "id": "BER",
+      "time": "2027-02-03 06:00"
+     },
+     "arrival_airport": {
+      "name": "Lisbon",
+      "id": "LIS",
+      "time": "2027-02-03 08:45"
+     },
+     "duration": 225,
+     "airplane": "Airbus A320neo",
+     "airline": "TAP Air Portugal",
+     "airline_logo": "https://x/logo.png",
+     "travel_class": "Economy",
+     "flight_number": "TP 541",
+     "legroom": "31 in",
+     "extensions": [
+      "Average legroom (31 in)",
+      "Carbon emissions estimate: 400 kg"
+     ],
+     "overnight": false
+    },
+    {
+     "departure_airport": {
+      "name": "Lisbon",
+      "id": "LIS",
+      "time": "2027-02-03 10:30"
+     },
+     "arrival_airport": {
+      "name": "Rio de Janeiro Gale\u00e3o",
+      "id": "GIG",
+      "time": "2027-02-03 17:30"
+     },
+     "duration": 600,
+     "airplane": "Airbus A330neo",
+     "airline": "TAP Air Portugal",
+     "airline_logo": "https://x/logo.png",
+     "travel_class": "Economy",
+     "flight_number": "TP 73",
+     "legroom": "31 in",
+     "extensions": [
+      "Average legroom (31 in)",
+      "Carbon emissions estimate: 400 kg"
+     ],
+     "overnight": false
+    }
+   ],
+   "layovers": [
+    {
+     "duration": 105,
+     "name": "Lisbon",
+     "id": "LIS"
+    }
+   ],
+   "total_duration": 930,
+   "carbon_emissions": {
+    "this_flight": 812000,
+    "typical_for_this_route": 790000,
+    "difference_percent": 3
+   },
+   "price": 812,
+   "type": "Round trip",
+   "airline_logo": "x",
+   "departure_token": "DEP_TOKEN_1"
+  }
+ ],
+ "other_flights": [
+  {
+   "flights": [
+    {
+     "departure_airport": {
+      "name": "Berlin Brandenburg",
+      "id": "BER",
+      "time": "2027-02-03 07:00"
+     },
+     "arrival_airport": {
+      "name": "Frankfurt",
+      "id": "FRA",
+      "time": "2027-02-03 08:10"
+     },
+     "duration": 70,
+     "airplane": "Airbus A321",
+     "airline": "Lufthansa",
+     "airline_logo": "https://x/logo.png",
+     "travel_class": "Economy",
+     "flight_number": "LH 179",
+     "legroom": "31 in",
+     "extensions": [
+      "Average legroom (31 in)",
+      "Carbon emissions estimate: 400 kg"
+     ],
+     "overnight": false
+    },
+    {
+     "departure_airport": {
+      "name": "Frankfurt",
+      "id": "FRA",
+      "time": "2027-02-03 22:00"
+     },
+     "arrival_airport": {
+      "name": "S\u00e3o Paulo",
+      "id": "GRU",
+      "time": "2027-02-04 05:30"
+     },
+     "duration": 690,
+     "airplane": "Boeing 747-8",
+     "airline": "Lufthansa",
+     "airline_logo": "https://x/logo.png",
+     "travel_class": "Economy",
+     "flight_number": "LH 506",
+     "legroom": "31 in",
+     "extensions": [
+      "Average legroom (31 in)",
+      "Carbon emissions estimate: 400 kg"
+     ],
+     "overnight": true
+    },
+    {
+     "departure_airport": {
+      "name": "S\u00e3o Paulo",
+      "id": "GRU",
+      "time": "2027-02-04 08:00"
+     },
+     "arrival_airport": {
+      "name": "Rio de Janeiro Gale\u00e3o",
+      "id": "GIG",
+      "time": "2027-02-04 09:00"
+     },
+     "duration": 60,
+     "airplane": "Airbus A320",
+     "airline": "LATAM",
+     "airline_logo": "https://x/logo.png",
+     "travel_class": "Economy",
+     "flight_number": "LA 3311",
+     "legroom": "31 in",
+     "extensions": [
+      "Average legroom (31 in)",
+      "Carbon emissions estimate: 400 kg"
+     ],
+     "overnight": false
+    }
+   ],
+   "layovers": [
+    {
+     "duration": 830,
+     "name": "Frankfurt",
+     "id": "FRA"
+    },
+    {
+     "duration": 150,
+     "name": "S\u00e3o Paulo",
+     "id": "GRU",
+     "overnight": false
+    }
+   ],
+   "total_duration": 1800,
+   "carbon_emissions": {
+    "this_flight": 1000000,
+    "typical_for_this_route": 790000,
+    "difference_percent": 27
+   },
+   "price": 1105,
+   "type": "Round trip",
+   "extensions": [
+    "Self transfer"
+   ],
+   "departure_token": "DEP_TOKEN_2"
+  }
+ ],
+ "price_insights": {
+  "lowest_price": 812,
+  "price_level": "typical",
+  "typical_price_range": [
+   700,
+   1100
+  ],
+  "price_history": [
+   [
+    1762560000000,
+    850
+   ],
+   [
+    1762646400000,
+    812
+   ]
+  ]
+ }
+}
