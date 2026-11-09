@@ -92,7 +92,12 @@ def test_travelpayouts_params(cfg, granularity):
         assert ret["departure_at"] == "2027-03" and "return_at" not in ret
     else:
         assert (rt["departure_at"], rt["return_at"]) == ("2027-02-03", "2027-03-03")
-    assert rt["limit"] == 1000 and ret["one_way"] == "true" and ret["origin"] == "GIG"
+    assert rt["limit"] == 1000 and ret["one_way"] == "true"
+    assert ret["origin"] == (prov.cfg.get("city_codes") or {}).get("GIG", "GIG") and rt["origin"] == "BER"
+    plain = travelpayouts.TravelpayoutsProvider({"date_granularity": granularity}, "t")
+    assert plain.build_params(_tp_search(cfg, "one_way_return"))["origin"] == "GIG"
+    coded = travelpayouts.TravelpayoutsProvider({"city_codes": {"GIG": "RIO"}}, "t")
+    assert coded.build_params(_tp_search(cfg, "round_trip"))["destination"] == "RIO"
 
 
 def test_travelpayouts_month_mode_exact_min_price(cfg, monkeypatch):

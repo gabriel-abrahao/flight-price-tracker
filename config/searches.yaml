@@ -55,7 +55,7 @@ providers:
                                  # ticket, but min_price only counts exact-date tickets. day: exact dates only.
     limit: 1000                  # tickets per page (API max 1000)
     max_pages: 3                 # fetch further pages only while a page comes back full
-    # city_codes: {GIG: RIO, CNF: BHZ}   # optional: query city codes instead of airports
+    city_codes: {GIG: RIO, CNF: BHZ}   # query city codes (the API caches prices per city); exact_date still checks the airport
 
 # Lower number = more important. A search's priority = mode priority + route priority + trip priority.
 mode_priority:
