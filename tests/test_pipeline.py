@@ -140,3 +140,26 @@ def test_budget_drops_lowest_priority_first():
     chosen, skipped = select_by_priority(["p0", "p1", "p2"], [2, 1, 1], 3)
     assert chosen == ["p0", "p1"] and skipped == ["p2"]
     assert select_by_priority(["a"], [1], None) == (["a"], [])
+
+
+def _sf(frm, to, d, dep, arr, dur):
+    sf = [None] * 23
+    sf[3], sf[4], sf[5], sf[6] = frm, f"{frm} airport", f"{to} airport", to
+    sf[8], sf[10], sf[11], sf[17] = dep, arr, dur, "Airbus A350"
+    sf[20], sf[21], sf[22] = d, d, ["TP", "73", None, "TAP Air Portugal"]
+    return sf
+
+
+def test_google_tolerant_parser_reads_top_list_when_other_is_empty():
+    flight = [["TP", ["TAP Air Portugal"], [_sf("BER", "LIS", [2027, 2, 3], [6], [8, 45], 225),
+                                            _sf("LIS", "CNF", [2027, 2, 3], [10, 30], [17, 0], 570)]]
+              + [None] * 19 + [[None] * 7 + [812000, 790000]], [[None, 950]]]
+    payload = [None, None, [[flight]], None, None, None, None, [None, [[], [["TP", "TAP"]]]]]
+    html = ('<html><script class="ds:1">AF_initDataCallback({key: \'ds:1\', hash: \'1\', data:'
+            + json.dumps(payload) + ', sideChannel: {}});</script></html>')
+    flights, bad = google_direct.parse_html(html)
+    assert bad == 0 and len(flights) == 1 and flights[0]["list"] == "top" and flights[0]["price"] == 950
+    res = Result()
+    google_direct.parse_flights(flights, res, True, "EUR")
+    assert res.itineraries[0]["out_layover_min"] == [105]
+    assert res.segments[0]["flight_number"] == "TP 73" and res.itineraries[0]["carbon_g"] == 812000

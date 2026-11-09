@@ -5,7 +5,7 @@ That is why it runs alongside the API providers rather than instead of them.
 """
 from __future__ import annotations
 
-import dataclasses
+import json
 import datetime as dt
 import time
 from typing import Any
@@ -45,7 +45,7 @@ class GoogleDirectProvider(Provider):
         )
 
     def fetch(self, search: Search) -> Result:
-        from fast_flights import FlightsNotFound, get_flights
+        from fast_flights import FlightsNotFound, fetch_flights_html
 
         q = self.build_query(search)
         res = Result(request_params={"url": q.url(), "trip": "round-trip" if search.is_round_trip else "one-way"})
@@ -56,22 +56,18 @@ class GoogleDirectProvider(Provider):
         for attempt in range(retries + 1):
             res.api_calls += 1
             try:
-                flights = get_flights(q)
+                flights, n_bad = parse_html(fetch_flights_html(q))
                 break
             except FlightsNotFound as e:
                 res.status, res.error = "no_results", f"{e} (after {attempt + 1} attempts)"
-            except Exception as e:  # parsing failures usually mean Google served a consent/captcha page
+            except Exception as e:  # e.g. Google served a consent/captcha page
                 res.status, res.error = "error", f"{type(e).__name__}: {e} (after {attempt + 1} attempts)"[:500]
             if attempt < retries:
                 time.sleep(wait * (attempt + 1))
         if flights is None:
             return res
-        res.status, res.error = "ok", ""
-        meta = getattr(flights, "metadata", None)
-        res.raw = {
-            "flights": [dataclasses.asdict(f) for f in flights],
-            "metadata": dataclasses.asdict(meta) if meta is not None else None,
-        }
+        res.status, res.error = "ok", (f"{n_bad} unparseable options skipped" if n_bad else "")
+        res.raw = {"flights": flights}
         parse_flights(res.raw["flights"], res, search.is_round_trip, search.params.get("currency", "EUR"))
         res.status = "ok" if res.itineraries else "no_results"
         return res
@@ -106,6 +102,9 @@ def parse_flights(flights: list[dict[str, Any]], res: Result, is_rt: bool, curre
                 "arr_time_local": arr,
                 "duration_min": s.get("duration"),
                 "aircraft": s.get("plane_type"),
+                "airline": s.get("airline"),
+                "marketing_carrier": s.get("airline_code"),
+                "flight_number": s.get("flight_number"),
                 # same airport, so local-time difference is the layover
                 "layover_after_min": minutes_between(arr, _fmt(nxt["departure"])) if nxt else None,
                 "layover_after_airport": s["to_airport"]["code"] if nxt else None,
@@ -119,7 +118,7 @@ def parse_flights(flights: list[dict[str, Any]], res: Result, is_rt: bool, curre
             summary["out_duration_min"] = sum(int(s["duration_min"] or 0) for s in segs) + sum(
                 int(s["layover_after_min"] or 0) for s in segs[:-1])
         res.itineraries.append({
-            "list_name": "results",
+            "list_name": f.get("list", "results"),
             "rank": rank,
             "price": f.get("price"),
             "currency": currency,
@@ -133,3 +132,67 @@ def parse_flights(flights: list[dict[str, Any]], res: Result, is_rt: bool, curre
         for s in segs:
             s["_itin"] = idx
             res.segments.append(s)
+
+
+def _g(obj: Any, *idx: int) -> Any:
+    """Nested index access that returns None instead of raising."""
+    for i in idx:
+        if not isinstance(obj, list) or i >= len(obj):
+            return None
+        obj = obj[i]
+    return obj
+
+
+def _time(v: Any) -> list[int]:
+    v = list(v or []) + [None, None]
+    return [v[0] or 0, v[1] or 0]
+
+
+def parse_html(html: str) -> tuple[list[dict[str, Any]], int]:
+    """Tolerant version of fast-flights' parser.
+
+    Google puts results in two lists (payload[2] = "top" flights, payload[3] = the rest); fast-flights
+    3.1 only reads payload[3] and crashes when it is empty. Each option is parsed independently so one
+    odd entry doesn't lose the whole search. Returns (flights as dicts, number of skipped options).
+    """
+    from fast_flights import FlightsNotFound
+    from selectolax.lexbor import LexborHTMLParser
+
+    script = LexborHTMLParser(html).css_first(r"script.ds\:1")
+    if script is None:
+        raise RuntimeError("no flight data in page (consent or captcha page?)")
+    data = script.text().split("data:", 1)[1].rsplit(",", 1)[0]
+    if data.endswith("errorHasStatus: true"):
+        raise FlightsNotFound("no flights found; received error")
+    payload = json.loads(data)
+    out: list[dict[str, Any]] = []
+    bad = 0
+    for list_name, pos in (("top", 2), ("other", 3)):
+        for k in _g(payload, pos, 0) or []:
+            try:
+                flight = k[0]
+                segs = []
+                for sf in flight[2]:
+                    segs.append({
+                        "from_airport": {"code": sf[3], "name": sf[4]},
+                        "to_airport": {"code": sf[6], "name": sf[5]},
+                        "departure": {"date": list(sf[20]), "time": _time(sf[8])},
+                        "arrival": {"date": list(sf[21]), "time": _time(sf[10])},
+                        "duration": sf[11],
+                        "plane_type": _g(sf, 17),
+                        "airline_code": _g(sf, 22, 0),
+                        "flight_number": " ".join(str(x) for x in (_g(sf, 22, 0), _g(sf, 22, 1)) if x),
+                        "airline": _g(sf, 22, 3),
+                        "_raw": sf,  # kept in the raw JSON so new fields can be mined later
+                    })
+                out.append({
+                    "list": list_name,
+                    "type": flight[0],
+                    "price": _g(k, 1, 0, 1),
+                    "airlines": flight[1],
+                    "flights": segs,
+                    "carbon": {"emission": _g(flight, 22, 7), "typical_on_route": _g(flight, 22, 8)},
+                })
+            except (TypeError, IndexError, KeyError):
+                bad += 1
+    return out, bad
