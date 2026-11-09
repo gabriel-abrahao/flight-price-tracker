@@ -22,7 +22,7 @@ class GoogleDirectProvider(Provider):
         try:
             import fast_flights  # noqa: F401
         except ImportError as e:  # pragma: no cover
-            raise ProviderUnavailable(f"google_direct: fast-flights not installed ({e})") from e
+            raise ProviderUnavailable(f"google_direct: fast-flights cannot be imported ({e})", broken=True) from e
 
     def build_query(self, search: Search):
         from fast_flights import FlightQuery, Passengers, create_query

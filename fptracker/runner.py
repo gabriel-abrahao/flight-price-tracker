@@ -58,7 +58,7 @@ def make_plan(cfg: dict[str, Any], now_local: dt.datetime, *, force: bool = Fals
             try:
                 provider = cls(pcfg, secret)
             except ProviderUnavailable as e:
-                plans.append(ProviderPlan(name, "unavailable", str(e)))
+                plans.append(ProviderPlan(name, "broken" if e.broken else "unavailable", str(e)))
                 continue
         mine = sorted((s for s in searches if s.providers is None or name in s.providers),
                       key=lambda s: (s.priority, s.search_id))

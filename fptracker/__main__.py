@@ -83,6 +83,9 @@ def main(argv: list[str] | None = None) -> int:
     if attempted and not ok:
         print("Every search failed.", file=sys.stderr)
         return 1
+    if any(p.status == "broken" for p in plans):
+        print("A provider is broken (see above).", file=sys.stderr)
+        return 1
     return 0
 
 

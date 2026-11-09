@@ -15,7 +15,11 @@ CABIN_NAMES = ("economy", "premium_economy", "business", "first")
 
 
 class ProviderUnavailable(Exception):
-    """Provider cannot run at all (missing key, missing package)."""
+    """Provider cannot run at all. ``broken=False`` (missing key) is expected; ``broken=True`` is a bug."""
+
+    def __init__(self, msg: str, broken: bool = False):
+        super().__init__(msg)
+        self.broken = broken
 
 
 @dataclass
