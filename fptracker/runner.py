@@ -114,7 +114,10 @@ def collect(provider_name: str, s: Search, res: Result, run_id: str, key: dict[s
         tables["price_history"].append({**key, "history_ts_utc": ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
                                         "history_date": ts.date().isoformat(),
                                         "history_price": ph["history_price"], "currency": ph.get("currency")})
-    main_prices = [it["price"] for it in res.itineraries if it.get("price") is not None and "_parent" not in it]
+    # min_price only counts priced top-level itineraries for the searched dates; providers that return a
+    # wider date window (travelpayouts month mode) flag other-date tickets with _exact_date=False.
+    main_prices = [it["price"] for it in res.itineraries
+                   if it.get("price") is not None and "_parent" not in it and it.get("_exact_date", True)]
     tables["searches"].append({
         **key,
         "status": res.status,

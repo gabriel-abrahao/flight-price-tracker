@@ -24,9 +24,15 @@ Dates are computed from Easter. Once a trip departs, it rolls over to the next C
 | `google_direct` | Google Flights, scraped with [fast-flights](https://github.com/AWeirdDev/flights). Unofficial; may break or be rate-limited | none | daily, unlimited |
 | `serpapi` | Google Flights via [SerpApi](https://serpapi.com). Richest data: layovers, legroom, CO2, price insights, Google's own price history | `SERPAPI_API_KEY` | every 2 days, ≤235 calls/month (free plan: 250) |
 | `ignav` | [Ignav](https://ignav.com) live fares API. Round trips include both legs, plus baggage info | `IGNAV_API_KEY` | daily, ≤450/month, ≤950 lifetime (1,000 free requests) |
-| `travelpayouts` | [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163). Cached prices from other users' searches; patchy but free | `TRAVELPAYOUTS_TOKEN` | daily, unlimited |
+| `travelpayouts` | [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163). Cached prices from other users' searches; patchy but free. Queries a whole month (see below) | `TRAVELPAYOUTS_TOKEN` | daily, unlimited |
 
 A provider without its secret is skipped. The others still run.
+
+**Travelpayouts date window.** The Aviasales API only returns prices that other users searched recently, so a query for one exact date is almost always empty. With `date_granularity: month` (the default, under `providers.travelpayouts`) each search asks for the month of the searched leg (`departure_at=2027-02`, and `return_at=2027-03` for a round trip), with up to `limit: 1000` tickets per page. Every cached ticket in that window is stored in `itineraries` with its real dates (`out_departure_time`, `in_departure_time`), so many of them are for other dates than the search. Such rows are tagged in `extensions`:
+- `date_window=month` or `date_window=day`: how wide the query was (`request_params` in `searches` also shows the `YYYY-MM` query)
+- `exact_date=1`: the departure date (and return date, for round trips) and the airports match the searched ones. `exact_date=0`: any other ticket in the window, e.g. other days or Rio's SDU instead of GIG
+
+`min_price` in `searches` only counts `exact_date=1` tickets, so it stays comparable with the other providers. It is empty (with `status=ok`) when the window has tickets but none on the searched dates. `date_granularity: day` restores the old exact-date queries.
 
 **Budgets.** Each provider spreads its monthly budget evenly over the run days left in the month. If a run's share is smaller than the number of searches, the searches with the highest priority number are skipped first. Priority comes from `mode_priority` + route + trip priorities in the config.
 
@@ -81,6 +87,8 @@ Every table starts with the same key columns, so the tables join on `(run_id, pr
 - `outbound_date`, `return_date`, `flight_date`
 
 `price_scope` tells you what a price covers: `round_trip_total` or `one_way`.
+
+For Travelpayouts, keep only `extensions LIKE '%exact_date=1%'` when you want prices for the searched dates (see above).
 
 ```python
 import duckdb

@@ -61,8 +61,75 @@ def test_ignav_parse():
 def test_travelpayouts_parse():
     res = Result()
     travelpayouts.parse_response(fixture("travelpayouts_rt.json"), res, True)
-    [it] = res.itineraries
-    assert it["price"] == 760 and it["currency"] == "EUR" and it["price_status"] == "cached"
+    assert [it["price"] for it in res.itineraries] == [640, 700, 760]
+    it = res.itineraries[2]
+    assert it["currency"] == "EUR" and it["price_status"] == "cached" and it["out_route"] == ["BER", "GIG"]
+    assert all(it["_exact_date"] for it in res.itineraries)  # no wanted dates given -> nothing to compare
+
+
+class _FakeResponse:
+    status_code = 200
+
+    def __init__(self, body):
+        self.body = body
+
+    def json(self):
+        return self.body
+
+
+def _tp_search(cfg, mode):
+    return next(s for s in expand_searches(cfg, dt.date(2026, 11, 9))
+                if s.route_id == "BER-GIG" and s.trip_id == "wed_before_carnival_plus_1m" and s.mode == mode)
+
+
+@pytest.mark.parametrize("granularity", ["month", "day"])
+def test_travelpayouts_params(cfg, granularity):
+    prov = travelpayouts.TravelpayoutsProvider({**cfg["providers"]["travelpayouts"], "date_granularity": granularity}, "t")
+    rt = prov.build_params(_tp_search(cfg, "round_trip"))
+    ret = prov.build_params(_tp_search(cfg, "one_way_return"))
+    if granularity == "month":
+        assert (rt["departure_at"], rt["return_at"]) == ("2027-02", "2027-03")
+        assert ret["departure_at"] == "2027-03" and "return_at" not in ret
+    else:
+        assert (rt["departure_at"], rt["return_at"]) == ("2027-02-03", "2027-03-03")
+    assert rt["limit"] == 1000 and ret["one_way"] == "true" and ret["origin"] == "GIG"
+
+
+def test_travelpayouts_month_mode_exact_min_price(cfg, monkeypatch):
+    calls = []
+
+    def fake_request(method, url, params=None, headers=None, **kw):
+        calls.append(params)
+        return _FakeResponse(fixture("travelpayouts_rt.json"))
+
+    monkeypatch.setattr(travelpayouts, "http_request", fake_request)
+    s = _tp_search(cfg, "round_trip")
+    assert (s.outbound_date, s.return_date) == (dt.date(2027, 2, 3), dt.date(2027, 3, 3))
+    res = travelpayouts.TravelpayoutsProvider(cfg["providers"]["travelpayouts"], "t").fetch(s)
+    assert res.status == "ok" and res.api_calls == 1 and len(calls) == 1  # short page -> no pagination
+    assert res.request_params["departure_at"] == "2027-02" and res.request_params["return_at"] == "2027-03"
+    # all cached tickets are kept; only the GIG ticket on the searched dates is exact
+    assert [it["extensions"] for it in res.itineraries] == [
+        ["date_window=month", "exact_date=0"],   # other dates
+        ["date_window=month", "exact_date=0"],   # right dates, but SDU instead of GIG
+        ["date_window=month", "exact_date=1"]]
+    key = runner._key_row("R", "travelpayouts", s, dt.datetime(2026, 11, 9, tzinfo=dt.timezone.utc), TZ)
+    tables = runner.collect("travelpayouts", s, res, "R", key, "raw.json.gz", 0.1)
+    [row] = tables["searches"]
+    assert row["min_price"] == 760 and row["n_itineraries"] == 3
+    assert row["request_params"]["departure_at"] == "2027-02"
+    assert all("_exact_date" not in r for r in tables["itineraries"])
+    assert tables["itineraries"][0]["out_departure_time"].startswith("2027-02-17")
+
+
+def test_travelpayouts_pagination(cfg, monkeypatch):
+    pages = {1: [{"price": i, "departure_at": "2027-02-03T06:00:00+01:00"} for i in range(1000)],
+             2: [{"price": 5000, "departure_at": "2027-02-04T06:00:00+01:00"}]}
+    monkeypatch.setattr(travelpayouts, "http_request",
+                        lambda *a, params=None, **kw: _FakeResponse({"success": True, "currency": "eur",
+                                                                     "data": pages[params["page"]]}))
+    res = travelpayouts.TravelpayoutsProvider(cfg["providers"]["travelpayouts"], "t").fetch(_tp_search(cfg, "one_way_outbound"))
+    assert res.api_calls == 2 and len(res.itineraries) == 1001 and len(res.raw["pages"]) == 2
 
 
 def test_google_direct_parse():
