@@ -30,7 +30,9 @@ providers:
     enabled: true
     every_n_days: 1
     monthly_budget: null
-    pause_seconds: 4
+    pause_seconds: 8
+    retries: 3                   # Google intermittently returns an error page; retry with growing waits
+    retry_wait_seconds: 20
   serpapi:                       # Google Flights via SerpApi. Richest data. Free plan: 250 searches/month.
     enabled: true
     secret_env: SERPAPI_API_KEY

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime as dt
+import time
 from typing import Any
 
 from ..config import Search
@@ -48,15 +49,24 @@ class GoogleDirectProvider(Provider):
 
         q = self.build_query(search)
         res = Result(request_params={"url": q.url(), "trip": "round-trip" if search.is_round_trip else "one-way"})
-        res.api_calls = 1
-        try:
-            flights = get_flights(q)
-        except FlightsNotFound as e:
-            res.status, res.error = "no_results", str(e)
+        # Google intermittently answers with an error payload (looks like throttling): retry with backoff.
+        retries = int(self.cfg.get("retries", 3))
+        wait = float(self.cfg.get("retry_wait_seconds", 20))
+        flights = None
+        for attempt in range(retries + 1):
+            res.api_calls += 1
+            try:
+                flights = get_flights(q)
+                break
+            except FlightsNotFound as e:
+                res.status, res.error = "no_results", f"{e} (after {attempt + 1} attempts)"
+            except Exception as e:  # parsing failures usually mean Google served a consent/captcha page
+                res.status, res.error = "error", f"{type(e).__name__}: {e} (after {attempt + 1} attempts)"[:500]
+            if attempt < retries:
+                time.sleep(wait * (attempt + 1))
+        if flights is None:
             return res
-        except Exception as e:  # parsing failures usually mean Google served a consent/captcha page
-            res.status, res.error = "error", f"{type(e).__name__}: {e}"[:500]
-            return res
+        res.status, res.error = "ok", ""
         meta = getattr(flights, "metadata", None)
         res.raw = {
             "flights": [dataclasses.asdict(f) for f in flights],
